@@ -51,5 +51,5 @@ if __name__ == "__main__":
     print("A:", A)
     print("A_pinv_manual:", A_pinv_manual)
     print("A_pinv_numpy:", A_pinv_numpy)
-    print("Are A and A_pinv equal?", check_equality(A_pinv_manual, A_pinv_numpy))
+    print("Are A_pinv_manual and A_pinv_numpy equal?", check_equality(A_pinv_manual, A_pinv_numpy))
 
