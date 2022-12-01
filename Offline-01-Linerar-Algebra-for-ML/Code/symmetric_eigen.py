@@ -1,10 +1,12 @@
 import numpy as np
 
-# function to generate a symmetric matrix
+# function to generate a invertible symmetric matrix
 def generate_symmetric_matrix(n):
     # generate a random matrix
     A = np.random.randint(0, 10, size=(n, n))
-    # make it symmetric
+    # make it invertible symmetric
+    while np.linalg.det(A + A.T) == 0:
+        A = np.random.randint(0, 10, size=(n, n))
     A = A + A.T
     return A
 
