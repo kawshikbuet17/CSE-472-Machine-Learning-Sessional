@@ -6,7 +6,7 @@ def generate_random_matrix(n, m):
     A = np.random.randint(0, 10, size=(n, m))
     return A
 
-# function to singular value decomposition
+# function to generate singular value decomposition
 def generate_singular_value_decomposition(A):
     # U = left singular vectors
     # D = singular values
@@ -22,7 +22,6 @@ def get_moore_penrose_pseudo_inverse_numpy(A):
 def get_moore_penrose_pseudo_inverse_manual(A):
     U, D, V = generate_singular_value_decomposition(A)
     D = np.diag(D)
-    D
     D_pinv = np.linalg.pinv(D)
     return V.T.dot(D_pinv).dot(U.T)
 
@@ -51,5 +50,5 @@ if __name__ == "__main__":
     print("A:", A)
     print("A_pinv_manual:", A_pinv_manual)
     print("A_pinv_numpy:", A_pinv_numpy)
-    print("Are A_pinv_manual and A_pinv_numpy equal?", check_equality(A_pinv_manual, A_pinv_numpy))
+    print("A_pinv_manual == A_pinv_numpy ----> ", check_equality(A_pinv_manual, A_pinv_numpy))
 

@@ -10,7 +10,7 @@ def generate_symmetric_matrix(n):
     A = A + A.T
     return A
 
-# function to eigen decomposition
+# function to generate eigen decomposition
 def generate_eigenvalues_eigenvectors(A):
     # get eigen values and eigen vectors
     eigen_values, eigen_vectors = np.linalg.eig(A)
@@ -51,4 +51,4 @@ if __name__ == "__main__":
     print("eigen_values:", eigen_values)
     print("eigen_vectors:", eigen_vectors)
     print("A_recon:", A_recon)
-    print("Are A and A_recon equal?", check_equality(A, A_recon))
+    print("A == A_recon ? ----> ", check_equality(A, A_recon))
