@@ -17,7 +17,6 @@ def split_dataset(X, y, test_size = 0.10, shuffle = False):
     n_test = int(n * test_size)
     n_train = n - n_test
     if shuffle:
-        np.random.seed(1)
         idx = np.random.permutation(n)
         X = X[idx]
         y = y[idx]

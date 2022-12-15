@@ -20,8 +20,8 @@ class LogisticRegression:
 
     # function to initialize weights and bias
     def initialize_weights_and_bias(self, d):
-        # self.W = np.zeros((d,))
-        self.W = np.random.uniform(low=-1, high=1, size=(d,))
+        self.W = np.zeros((d,))
+        # self.W = np.random.uniform(low=-1, high=1, size=(d,))
         self.b = 0
 
     # function for forward pass

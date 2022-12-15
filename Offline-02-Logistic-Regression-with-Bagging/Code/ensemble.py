@@ -1,5 +1,6 @@
 from data_handler import bagging_sampler
 import numpy as np
+import copy
 
 class BaggingClassifier:
     def __init__(self, base_estimator, n_estimator):
@@ -8,8 +9,10 @@ class BaggingClassifier:
         :param n_estimator:
         :return:
         """
-        self.base_estimator = base_estimator
+        self.base_estimators = []
         self.n_estimator = n_estimator
+        for i in range(n_estimator):
+            self.base_estimators.append(copy.deepcopy(base_estimator))
         self.estimators = []
 
     def fit(self, X, y):
@@ -23,7 +26,8 @@ class BaggingClassifier:
 
         for i in range(self.n_estimator):
             X_, y_ = bagging_sampler(X, y)
-            self.estimators.append(self.base_estimator.fit(X_, y_))
+            estimator = self.base_estimators[i].fit(X_, y_)
+            self.estimators.append(estimator)
         return self
 
     def predict(self, X):

@@ -17,7 +17,7 @@ if __name__ == '__main__':
     # training
     params = {
         'lr': 0.01,
-        'n_iters': 10000
+        'n_iters': 1000
     }
     base_estimator = LogisticRegression(params)
     classifier = BaggingClassifier(base_estimator=base_estimator, n_estimator=9)
