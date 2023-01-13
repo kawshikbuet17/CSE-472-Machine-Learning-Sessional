@@ -1,11 +1,9 @@
 import numpy as np
 from scipy.stats import multivariate_normal
 import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
 import pandas as pd
 
 epsilion = 1e-6
-
 
 def plot_gaussian(data, means, covariances, K, responsibilities):
     plt.scatter(data[:, 0], data[:, 1], c=responsibilities.argmax(axis=1), cmap='viridis', s=40, edgecolor='k',
@@ -25,14 +23,10 @@ def animate(data, iteration, means, covariances, responsibilities, n_components)
         print("Drawing animation is only supported for 2D data")
         return
 
-    # Create the animation
-    # fig = plt.figure()
-
     plt.clf()
     plot_gaussian(data, means, covariances, K, responsibilities)
-    plt.title("Iteration: {}".format(iteration + 1))
+    plt.title("Iteration: {}".format(iteration))
     plt.pause(0.005)
-
 
 def EM_Algorithm(data, k, max_iter=30):
     """
@@ -51,7 +45,7 @@ def EM_Algorithm(data, k, max_iter=30):
 
     plt.ion()
     for i in range(max_iter):
-        print("Iteration: ", i)
+        print("Iteration: ", i + 1)
         # E-step
         responsibilities = np.zeros(shape=(n_samples, k))
         for j in range(k):
@@ -77,76 +71,16 @@ def EM_Algorithm(data, k, max_iter=30):
             covariances[j] += epsilion * np.eye(n_features)
 
         if (n_features == 2):
-            animate(data, i, means, covariances, responsibilities, k)
-
+            animate(data, i + 1, means, covariances, responsibilities, k)
     plt.ioff()
-
-    # Calculate log likelihood
-    pdfs = np.zeros((n_samples, k))
-    for j in range(k):
-        pdfs[:, j] = multivariate_normal.pdf(data, mean=means[j], cov=covariances[j], allow_singular=True)
-    log_likelihood = np.sum(np.log(np.sum(pdfs * weights, axis=1)))
-
-    return means, covariances, weights, log_likelihood
-
 
 if __name__ == '__main__':
     # take a data file as input
     # data file contains n data points each having m attributes
-    # take data2D.txt as input
+    # take dataXD.txt as input
     data = pd.read_csv('data2D.txt', header=None, sep=" ")
-
     data = data.values
 
-    # log_likelihoods = []
-
-    # # As the number of components (or, the number of gaussian distributions, k) is usually
-    # # unknown, you will assume a range for k. For example, from 1 to 10.
-    # # For each k, you will run the EM algorithm to estimate the GMM, keep a note of the log-likelihood
-    # k_min = 1
-    # k_max = 10
-    # k_range = range(k_min, k_max+1)
-    # # means, covariances, weights, responsibilities, log_likelihood = [], [], [], [], []
-    # for i in k_range:
-    #     means, covariances, weights, log_likelihood = EM_Algorithm(data, i)
-    #     view = False
-    #     if view == True:
-    #         print('k = ', i)
-    #         print('means = ', means)
-    #         print('covariances = ', covariances)
-    #         print('weights = ', weights)
-    #     log_likelihoods.append(log_likelihood)
-
-    # # fig, ax = plt.subplots()
-    # # ax.scatter(data[:, 0], data[:, 1])
-    # # lines = [ax.plot([], [])[0] for _ in k_range]
-    # # circles = [plt.Circle(means[j], np.sqrt(np.linalg.det(covariances[j])), color='c', fill=False) for j in
-    # #            k_range]
-    # # for circle in circles:
-    # #     ax.add_artist(circle)
-    # #
-    # #
-    # # def update(num):
-    # #     for j in k_range:
-    # #         x, y = np.random.multivariate_normal(means[j], covariances[j], 100).T
-    # #         lines[j].set_data(x, y)
-    # #         circles[j].center = means[j]
-    # #     ax.set_xlabel("Iteration: {}".format(num))
-    # #     return lines + circles
-    # # anim = FuncAnimation(fig, update, frames=range(100), blit=True)
-    # # plt.show()
-
-    # # Show a plot of how converged log-likelihood varies with the number of components k.
-
-    # plt.plot(k_range, log_likelihoods)
-    # plt.xlabel('k')
-    # plt.ylabel('log-likelihood')
-    # plt.show()
-
-    # # Choose an appropriate value for k from the plot. Let's call it k*.
-    # k_star = k_range[np.argmax(log_likelihoods)]
-    # print('k* = ', k_star)
-
-    # Task 2
     # Run the EM algorithm with k = k* and plot the data points with the estimated GMM.
-    EM_Algorithm(data, 3)
+    k_star = 3
+    EM_Algorithm(data, k_star)
