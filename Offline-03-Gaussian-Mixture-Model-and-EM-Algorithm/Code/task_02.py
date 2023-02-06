@@ -28,7 +28,7 @@ def animate(data, iteration, means, covariances, responsibilities, n_components)
     plt.title("Iteration: {}".format(iteration))
     plt.pause(0.005)
 
-def EM_Algorithm(data, k, max_iter=30):
+def EM_Algorithm(data, k, max_iter=50):
     """
     EM Algorithm for Gaussian Mixture Model
     :param data: numpy array of shape (n_samples, n_features)
@@ -71,16 +71,17 @@ def EM_Algorithm(data, k, max_iter=30):
             covariances[j] += epsilion * np.eye(n_features)
 
         if (n_features == 2):
-            animate(data, i + 1, means, covariances, responsibilities, k)
+            if i%5 == 0:
+                animate(data, i + 1, means, covariances, responsibilities, k)
     plt.ioff()
 
 if __name__ == '__main__':
     # take a data file as input
     # data file contains n data points each having m attributes
     # take dataXD.txt as input
-    data = pd.read_csv('data2D.txt', header=None, sep=" ")
+    data = pd.read_csv('data2D_B1.txt', header=None, sep=" ")
     data = data.values
 
     # Run the EM algorithm with k = k* and plot the data points with the estimated GMM.
-    k_star = 3
+    k_star = 5
     EM_Algorithm(data, k_star)

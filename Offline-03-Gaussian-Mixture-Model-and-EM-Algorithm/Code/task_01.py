@@ -58,7 +58,7 @@ if __name__ == '__main__':
     # take a data file as input
     # data file contains n data points each having m attributes
     # take data2D.txt as input
-    data = pd.read_csv('data3D.txt', header=None, sep=" ")
+    data = pd.read_csv('data2D_B1.txt', header=None, sep=" ")
     data = data.values
 
     log_likelihoods = []
