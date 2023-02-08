@@ -97,24 +97,44 @@ class Model:
 
         # plot history
         # plot epoch vs loss
-        plt.plot(train_loss_history, label='train')
-        plt.plot(val_loss_history, label='val')
+
+        epochs_range = range(1, epochs+1, 1)
+        plt.plot(epochs_range, train_loss_history, label='train')
         plt.xlabel('Epoch')
         plt.ylabel('Loss')
         plt.legend()
         plt.show()
 
         # plot epoch vs accuracy
-        plt.plot(train_acc_history, label='train')
-        plt.plot(val_acc_history, label='val')
+        plt.plot(epochs_range, train_acc_history, label='train')
         plt.xlabel('Epoch')
         plt.ylabel('Accuracy')
         plt.legend()
         plt.show()
 
         # plot epoch vs f1 score
-        plt.plot(train_f1_history, label='train')
-        plt.plot(val_f1_history, label='val')
+        plt.plot(epochs_range, train_f1_history, label='train')
+        plt.xlabel('Epoch')
+        plt.ylabel('F1 Score')
+        plt.legend()
+        plt.show()
+
+        # plot epoch vs loss
+        plt.plot(epochs_range, val_loss_history, label='val')
+        plt.xlabel('Epoch')
+        plt.ylabel('Loss')
+        plt.legend()
+        plt.show()
+
+        # plot epoch vs accuracy
+        plt.plot(epochs_range, val_acc_history, label='val')
+        plt.xlabel('Epoch')
+        plt.ylabel('Accuracy')
+        plt.legend()
+        plt.show()
+
+        # plot epoch vs f1 score
+        plt.plot(epochs_range, val_f1_history, label='val')
         plt.xlabel('Epoch')
         plt.ylabel('F1 Score')
         plt.legend()
