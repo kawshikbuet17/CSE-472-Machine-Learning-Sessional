@@ -12,7 +12,7 @@ class MaxPoolingLayer:
  
         self.input_shape = input_data.shape
  
-        self.input_data = input_data
+        self.input_data = input_data.copy()
  
         batch_size, height, width, channels = input_data.shape
  

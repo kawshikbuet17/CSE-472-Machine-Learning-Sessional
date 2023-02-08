@@ -1,5 +1,6 @@
 import numpy as np
 from sklearn.metrics import f1_score
+import matplotlib.pyplot as plt
 class Model:
     def __init__(self, num_classes):
         self.layers = []
@@ -36,9 +37,21 @@ class Model:
         # calculate f1 score using sklearn
         f1 = f1_score(y, y_pred, average='macro')
 
-        return accuracy, f1
+        # calculate loss = summation of difference between y_pred and y
+        loss = 0
+        for i in range(len(y)):
+            loss += np.sum(np.abs(y_pred[i] - y[i]))
+        loss /= len(y)
+
+        return loss, accuracy, f1 
 
     def train(self, X_train, y_train, X_val, y_val, learning_rate, epochs, batch_size):
+        train_loss_history = []
+        train_acc_history = []
+        train_f1_history = []
+        val_loss_history = []
+        val_acc_history = []
+        val_f1_history = []
         for epoch in range(epochs):
             print("epoch: ", epoch)
 
@@ -59,8 +72,53 @@ class Model:
                 for layer in reversed(self.layers):
                     grad = layer.backprop(grad, learning_rate)
             
-            # evaluate model
-            accuracy, f1 = self.evaluate(X_val, y_val)
+            # evaluate model on training set
+            loss, accuracy, f1 = self.evaluate(X_train, y_train)
+            print("Training loss: ", loss)
+            print("Training accuracy: ", accuracy)
+            print("Training f1 score: ", f1)
+            print()
 
-            print("accuracy: ", accuracy)
-            print("f1 score: ", f1)
+            # evaluate model on validation set
+            loss, accuracy, f1 = self.evaluate(X_val, y_val)
+            print("Validation loss: ", loss)
+            print("Validation accuracy: ", accuracy)
+            print("Validation f1 score: ", f1)
+            print()
+            print()
+
+            # save history
+            train_loss_history.append(loss)
+            train_acc_history.append(accuracy)
+            train_f1_history.append(f1)
+            val_loss_history.append(loss)
+            val_acc_history.append(accuracy)
+            val_f1_history.append(f1)
+
+        # plot history
+        # plot epoch vs loss
+        plt.plot(train_loss_history, label='train')
+        plt.plot(val_loss_history, label='val')
+        plt.xlabel('Epoch')
+        plt.ylabel('Loss')
+        plt.legend()
+        plt.show()
+
+        # plot epoch vs accuracy
+        plt.plot(train_acc_history, label='train')
+        plt.plot(val_acc_history, label='val')
+        plt.xlabel('Epoch')
+        plt.ylabel('Accuracy')
+        plt.legend()
+        plt.show()
+
+        # plot epoch vs f1 score
+        plt.plot(train_f1_history, label='train')
+        plt.plot(val_f1_history, label='val')
+        plt.xlabel('Epoch')
+        plt.ylabel('F1 Score')
+        plt.legend()
+        plt.show()
+
+
+

@@ -5,7 +5,7 @@ class SoftmaxLayer:
         self.X = None
     
     def forward(self, X):
-        self.X = X
+        self.X = X.copy()
         exp = np.exp(X - np.max(X, axis=1, keepdims=True))
         
         return exp / np.sum(exp, axis=1, keepdims=True)

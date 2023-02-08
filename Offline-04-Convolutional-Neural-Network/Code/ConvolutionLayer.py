@@ -13,7 +13,7 @@ class ConvolutionLayer:
         self.X = None
  
     def forward(self, X):
-        self.X = X
+        self.X = X.copy()
         batch_size, height, width, num_of_channels = X.shape
 
         height = (height - self.kernel_size_h + 2 * self.padding) / self.stride + 1

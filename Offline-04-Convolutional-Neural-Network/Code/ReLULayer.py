@@ -5,7 +5,7 @@ class ReLULayer:
         self.X = None
 
     def forward(self, X):
-        self.X = X
+        self.X = X.copy()
         return np.maximum(0, X)
 
     def backprop(self, dout, learning_rate):

@@ -14,7 +14,7 @@ class FullyConnectedLayer:
         if self.bias is None:
             self.bias = np.random.randn(self.output_size)
 
-        self.input = input
+        self.input = input.copy()
 
         return np.dot(input, self.weights) + self.bias
 
