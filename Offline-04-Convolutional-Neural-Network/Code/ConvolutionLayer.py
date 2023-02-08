@@ -89,27 +89,3 @@ class ConvolutionLayer:
         self.b -= learning_rate * db
 
         return dX
- 
-        # for i in range(Z_height):
-        #     for j in range(Z_width):
-        #         X_slice = self.X_padded[:, i * self.stride: i * self.stride +
-        #                                               self.kernel_size_h, j * self.stride: j * self.stride + self.kernel_size_w, :]
-        #         X_slice = X_slice.reshape(batch_size, -1)
-
-        #         temp_weight = self.W.reshape(self.num_of_filters, -1)
-        #         dW += np.dot(dZ[:, i, j, :].T,
-        #                                X_slice).reshape(self.W.shape)
-        #         db += np.sum(dZ[:, i, j, :], axis=0)
- 
-        #         dX_padded[:, i * self.stride: i * self.stride + self.kernel_size_h, j * self.stride: j * self.stride + self.kernel_size_w, :] += np.dot(
-        #             dZ[:, i, j, :], temp_weight).reshape(batch_size, self.kernel_size_h, self.kernel_size_w, num_of_channels)
- 
-        # # remove the padding from the X error
-        # dX = dX_padded[:, self.padding: self.padding + height,
-        #                                  self.padding: self.padding + width, :]
- 
-        # # update the W and b
-        # self.W = self.W - learning_rate * dW
-        # self.b = self.b - learning_rate * db
- 
-        # return dX

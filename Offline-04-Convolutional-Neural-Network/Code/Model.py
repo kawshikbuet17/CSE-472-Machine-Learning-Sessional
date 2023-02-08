@@ -1,5 +1,5 @@
 import numpy as np
-
+from sklearn.metrics import f1_score
 class Model:
     def __init__(self, num_classes):
         self.layers = []
@@ -32,7 +32,11 @@ class Model:
         print("y_pred (first 10)\t: ", y_pred[:10])
         print("y_real (first 10)\t: ", y[:10])
         accuracy = np.mean(y_pred == y)
-        return accuracy 
+
+        # calculate f1 score using sklearn
+        f1 = f1_score(y, y_pred, average='macro')
+
+        return accuracy, f1
 
     def train(self, X_train, y_train, X_val, y_val, learning_rate, epochs, batch_size):
         for epoch in range(epochs):
@@ -56,5 +60,7 @@ class Model:
                     grad = layer.backprop(grad, learning_rate)
             
             # evaluate model
-            accuracy = self.evaluate(X_val, y_val)
+            accuracy, f1 = self.evaluate(X_val, y_val)
+
             print("accuracy: ", accuracy)
+            print("f1 score: ", f1)
