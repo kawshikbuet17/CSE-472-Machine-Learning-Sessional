@@ -8,101 +8,108 @@ class ConvolutionLayer:
         self.kernel_size_w = kernel_size
         self.stride = stride
         self.padding = padding
-        self.weights = None
-        self.biases = None
-        self.input = None
+        self.W = None
+        self.b = None
+        self.X = None
  
-    def forward(self, input):
-        self.input = input
-        batch_size, height, width, channels = input.shape
+    def forward(self, X):
+        self.X = X
+        batch_size, height, width, num_of_channels = X.shape
+
+        height = (height - self.kernel_size_h + 2 * self.padding) / self.stride + 1
+        height = int(math.floor(height))
+        width = (width - self.kernel_size_w + 2 * self.padding) / self.stride + 1
+        width = int(math.floor(width))
+
+        Z = np.zeros([batch_size, height, width, self.num_of_filters])
+
+        if self.W is None:
+            # Xavier initialization
+            self.W = np.random.randn(self.num_of_filters, self.kernel_size_h, self.kernel_size_w, num_of_channels)
+            self.W = self.W * np.sqrt(2.0 / (self.kernel_size_h * self.kernel_size_w * num_of_channels))
+
+        if self.b is None:
+            self.b = np.zeros(self.num_of_filters)
  
-        output_height = int(math.floor(
-            (height - self.kernel_size_h + 2 * self.padding)) / self.stride + 1)
-        output_width = int(math.floor(
-            (width - self.kernel_size_w + 2 * self.padding)) / self.stride + 1)
-        output_shape = (batch_size, output_height,
-                        output_width, self.num_of_filters)
- 
-        if self.weights is None:
- 
-            # initialize weights and biases
-            # also include channels in the shape
-            # do i have to also include the channel numbers when initializing the weights?
-            self.weights = np.random.randn(self.num_of_filters, self.kernel_size_h,
-                                           self.kernel_size_w, channels) / np.sqrt(self.kernel_size_h * self.kernel_size_w * channels)
- 
-        if self.biases is None:
-            self.biases = np.zeros(self.num_of_filters)
- 
-        # pad the input data
-        self.input_with_padding = np.pad(input, ((
+        # pad the X data
+        self.X_padded = np.pad(X, ((
             0, 0), (self.padding, self.padding), (self.padding, self.padding), (0, 0)), 'constant')
  
+        for sample in range(batch_size):
+            for i in range(height):
+                for j in range(width):
+                    # determine the input slice
+                    h_start = i * self.stride
+                    h_end = i * self.stride + self.kernel_size_h
+                    w_start = j * self.stride
+                    w_end = j * self.stride + self.kernel_size_w
+
+                    input_slice = self.X_padded[sample, h_start: h_end, w_start: w_end, :]
  
-        output = np.zeros(output_shape)
+                    # perform the convolution with vectorization
+                    Z[sample, i, j, :] = np.sum(input_slice * self.W, axis=(1, 2, 3)) + self.b
+        return Z
  
-        for i in range(output_height):
-            for j in range(output_width):
-                input_matrix = self.input_with_padding[:, i * self.stride: i * self.stride +
-                                                      self.kernel_size_h, j * self.stride: j * self.stride + self.kernel_size_w, :]
-                input_matrix = input_matrix.reshape(batch_size, -1)
-                # print("input matrix: ", input_matrix.shape)
-                # print("weights: ", self.weights.shape)
-                temp_weight = self.weights.reshape(self.num_of_filters, -1)
-                # print("temp weight: ", temp_weight.shape)
-                output[:, i, j, :] = np.dot(
-                    input_matrix, temp_weight.T) + self.biases
- 
-        return output
- 
-    def backprop(self, output_error, learning_rate=0.05):
-        lr = learning_rate
-        batch_size, height, width, channels = self.input.shape
-        output_height, output_width, output_channels = output_error.shape[1:]
- 
-        # print("output error shape: ", output_error.shape)
-        # print("input shape: ", self.input_shape)
- 
+    def backprop(self, dZ, learning_rate):
+        batch_size, height, width, num_of_channels = self.X.shape
+        Z_height, Z_width, Z_num_of_channels = dZ.shape[1:]
+
+        # initialize the X error for padding
+        dX_padded = np.zeros(self.X_padded.shape)
+
         # initialize the weight error and bias error
-        weight_error = np.zeros(self.weights.shape)
-        bias_error = np.zeros(self.biases.shape)
+        dW = np.zeros(self.W.shape)
+        db = np.zeros(self.b.shape)
  
-        # initialize the input error
-        input_error = np.zeros(self.input.shape)
+        # initialize the X error
+        dX = np.zeros(self.X.shape)
+
+        for sample in range(batch_size):
+            for i in range(Z_height):
+                for j in range(Z_width):
+                    # determine the input slice
+                    h_start = i * self.stride
+                    h_end = i * self.stride + self.kernel_size_h
+                    w_start = j * self.stride
+                    w_end = j * self.stride + self.kernel_size_w
+
+                    input_slice = self.X_padded[sample, h_start: h_end, w_start: w_end, :]
+
+                    # perform the convolution with vectorization
+                    dW += dZ[sample, i, j, :, np.newaxis, np.newaxis, np.newaxis] * input_slice
+                    db += dZ[sample, i, j, :]
+                    dX_padded[sample, h_start: h_end, w_start: w_end, :] += np.sum(
+                        dZ[sample, i, j, :, np.newaxis, np.newaxis, np.newaxis] * self.W, axis=0)
+                    
+        # remove the padding
+        dX = dX_padded[:, self.padding: -self.padding, self.padding: -self.padding, :]
+
+        # update the weights and bias
+        self.W -= learning_rate * dW
+        self.b -= learning_rate * db
+
+        return dX
  
-        # initialize the input error for padding
-        input_error_padded = np.zeros(self.input_with_padding.shape)
+        # for i in range(Z_height):
+        #     for j in range(Z_width):
+        #         X_slice = self.X_padded[:, i * self.stride: i * self.stride +
+        #                                               self.kernel_size_h, j * self.stride: j * self.stride + self.kernel_size_w, :]
+        #         X_slice = X_slice.reshape(batch_size, -1)
+
+        #         temp_weight = self.W.reshape(self.num_of_filters, -1)
+        #         dW += np.dot(dZ[:, i, j, :].T,
+        #                                X_slice).reshape(self.W.shape)
+        #         db += np.sum(dZ[:, i, j, :], axis=0)
  
-        for i in range(output_height):
-            for j in range(output_width):
-                input_matrix = self.input_with_padding[:, i * self.stride: i * self.stride +
-                                                      self.kernel_size_h, j * self.stride: j * self.stride + self.kernel_size_w, :]
-                input_matrix = input_matrix.reshape(batch_size, -1)
-                # print("input matrix: ", input_matrix.shape)
-                # print("weights: ", self.weights.shape)
-                temp_weight = self.weights.reshape(self.num_of_filters, -1)
-                # print("temp weight: ", temp_weight.shape)
-                weight_error += np.dot(output_error[:, i, j, :].T,
-                                       input_matrix).reshape(self.weights.shape)
-                bias_error += np.sum(output_error[:, i, j, :], axis=0)
+        #         dX_padded[:, i * self.stride: i * self.stride + self.kernel_size_h, j * self.stride: j * self.stride + self.kernel_size_w, :] += np.dot(
+        #             dZ[:, i, j, :], temp_weight).reshape(batch_size, self.kernel_size_h, self.kernel_size_w, num_of_channels)
  
-                input_error_padded[:, i * self.stride: i * self.stride + self.kernel_size_h, j * self.stride: j * self.stride + self.kernel_size_w, :] += np.dot(
-                    output_error[:, i, j, :], temp_weight).reshape(batch_size, self.kernel_size_h, self.kernel_size_w, channels)
+        # # remove the padding from the X error
+        # dX = dX_padded[:, self.padding: self.padding + height,
+        #                                  self.padding: self.padding + width, :]
  
-        # remove the padding from the input error
-        input_error = input_error_padded[:, self.padding: self.padding + height,
-                                         self.padding: self.padding + width, :]
+        # # update the W and b
+        # self.W = self.W - learning_rate * dW
+        # self.b = self.b - learning_rate * db
  
-        # update the weights and biases
-        self.weights = self.update_weight(weight_error, lr)
-        self.biases = self.update_bias(bias_error, lr)
- 
-        return input_error
- 
-    def update_weight(self, weight_error, lr):
-        temp_weight = self.weights - lr * weight_error
-        return temp_weight
- 
-    def update_bias(self, bias_error, lr):
-        temp_bias = self.biases - lr * bias_error
-        return temp_bias
+        # return dX
