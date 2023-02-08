@@ -2,12 +2,13 @@ import numpy as np
 
 class SoftmaxLayer:
     def __init__(self):
-        self.last_input = None
+        self.X = None
     
-    def forward(self, input):
-        self.last_input = input
-        exp = np.exp(input - np.max(input, axis=1, keepdims=True))
+    def forward(self, X):
+        self.X = X
+        exp = np.exp(X - np.max(X, axis=1, keepdims=True))
+        
         return exp / np.sum(exp, axis=1, keepdims=True)
     
-    def backprop(self, grad_output, learning_rate):
-        return grad_output
+    def backprop(self, dout, learning_rate):
+        return dout

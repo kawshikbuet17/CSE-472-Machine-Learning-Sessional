@@ -16,7 +16,7 @@ def load_data(image_folder, label_path):
             img = img.astype(np.float32)
             images.append(img)
 
-            if len(images) == 500:
+            if len(images) == 1000:
                 break
     df = pd.read_csv(label_path)
     labels = df['digit'].values
@@ -25,17 +25,15 @@ def load_data(image_folder, label_path):
     return images, labels
 
 def preprocess_data(images, labels):
-    # rotate images iwth 90, 180, 270 degrees and coreesponding labels
+    # detection friendly preprocessing
     for i in range(len(images)):
-        images.append(np.rot90(images[i], 1))
-        labels = np.append(labels, labels[i])
-        images.append(np.rot90(images[i], 1))
-        labels = np.append(labels, labels[i])
-        images.append(np.rot90(images[i], 1))
-        labels = np.append(labels, labels[i])
+        images[i] = cv2.dilate(images[i], (3, 3))
+        # images[i] = cv2.threshold(images[i], 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
+        # images[i] = cv2.GaussianBlur(images[i], (3, 3), 0)
+        # images[i] = cv2.threshold(images[i], 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
 
     # convert to numpy array
-    images = np.array(images)
+    images = np.array(images)/255
     labels = np.array(labels)
 
     # reshape images to 28x28x1
