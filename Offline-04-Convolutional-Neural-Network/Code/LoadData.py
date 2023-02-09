@@ -16,8 +16,8 @@ def load_data(image_folder, label_path):
             img = img.astype(np.float32)
             images.append(img)
 
-            if len(images) == 1000:
-                break
+            # if len(images) == 1000:
+            #     break
     df = pd.read_csv(label_path)
     labels = df['digit'].values
     labels = labels[:len(images)]
