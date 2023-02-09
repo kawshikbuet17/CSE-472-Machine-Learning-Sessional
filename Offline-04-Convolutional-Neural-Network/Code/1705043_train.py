@@ -141,6 +141,9 @@ class ConvolutionLayer:
         self.b -= learning_rate * db
 
         return dX
+    
+    def destroy(self):
+        self.X = None
 
 class ReLULayer:
     def __init__(self):
@@ -154,6 +157,9 @@ class ReLULayer:
         dX = dout.copy()
         dX[self.X <= 0] = 0
         return dX
+    
+    def destroy(self):
+        self.X = None
 
 import numpy as np
 
@@ -211,6 +217,9 @@ class MaxPoolingLayer:
  
         return dX
 
+    def destroy(self):
+        # do nothing
+        pass
 class FlattenLayer:
     def __init__(self):
         self.last_input_shape = None
@@ -222,6 +231,9 @@ class FlattenLayer:
     def backprop(self, grad_output, learning_rate):
         return grad_output.reshape(self.last_input_shape)
 
+    def destroy(self):
+        # do nothing
+        pass
 
 import numpy as np
 
@@ -252,6 +264,8 @@ class FullyConnectedLayer:
         self.bias -= learning_rate * grad_bias
 
         return grad_input
+    def destroy(self):
+        self.input = None
 
 import numpy as np
 
@@ -267,6 +281,9 @@ class SoftmaxLayer:
     
     def backprop(self, dout, learning_rate):
         return dout
+    
+    def destroy(self):
+        self.X = None
 
 import numpy as np
 from sklearn.metrics import f1_score
@@ -432,6 +449,9 @@ class Model:
         # plt.figure(5)
         # plt.savefig('val_f1.png')
 
+    def destroy(self):
+        for layer in self.layers:
+            layer.destroy()
 
 
 # write main function here
@@ -449,7 +469,7 @@ def main():
     # train_images = np.concatenate((train_images_a, train_images_b, train_images_c), axis=0)
     # train_labels = np.concatenate((train_labels_a, train_labels_b, train_labels_c), axis=0)
 
-    train_images, train_labels = load_data('training-a', 'training-a.csv', limit = 300)
+    train_images, train_labels = load_data('training-a', 'training-a.csv', limit = 2000)
     train_images, train_labels = preprocess_data(train_images, train_labels)
 
     # print shapes
@@ -487,7 +507,8 @@ def main():
     model.add(SoftmaxLayer())
 
     # train
-    model.train(X_train=X_train, y_train=y_train, X_val=X_val, y_val=y_val, learning_rate=0.00001, epochs=5, batch_size=16)
+    model.train(X_train=X_train, y_train=y_train, X_val=X_val, y_val=y_val, learning_rate=0.00001, epochs=10, batch_size=16)
+    model.destroy()
 
     save_model(model)
     performance_metrics(model)
