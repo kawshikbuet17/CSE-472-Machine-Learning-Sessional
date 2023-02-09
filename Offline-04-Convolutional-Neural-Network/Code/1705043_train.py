@@ -311,8 +311,6 @@ class Model:
         loss = 0
         for i in range(len(y)):
             loss += np.sum(np.abs(y_pred[i] - y[i]))
-        loss /= len(y)
-
         return loss, accuracy, f1 
 
     def train(self, X_train, y_train, X_val, y_val, learning_rate, epochs, batch_size):
@@ -365,50 +363,74 @@ class Model:
             val_acc_history.append(accuracy)
             val_f1_history.append(f1)
 
+        # print history
+        print("train_loss_history: ", train_loss_history)
+        print("train_acc_history: ", train_acc_history)
+        print("train_f1_history: ", train_f1_history)
+        print("val_loss_history: ", val_loss_history)
+        print("val_acc_history: ", val_acc_history)
+        print("val_f1_history: ", val_f1_history)
+        
         # plot history
-        # plot epoch vs loss
+        
 
-        epochs_range = range(1, epochs+1, 1)
-        plt.plot(epochs_range, train_loss_history, label='train')
-        plt.xlabel('Epoch')
-        plt.ylabel('Loss')
-        plt.legend()
-        plt.show()
+        # epochs_range = range(1, epochs+1, 1)
 
-        # plot epoch vs accuracy
-        plt.plot(epochs_range, train_acc_history, label='train')
-        plt.xlabel('Epoch')
-        plt.ylabel('Accuracy')
-        plt.legend()
-        plt.show()
+        # # plot epoch vs loss
+        # plt.plot(epochs_range, train_loss_history, label='train')
+        # plt.xlabel('Epoch')
+        # plt.ylabel('Loss')
+        # plt.legend()
+        # # dont show plot, save it to file
+        # plt.figure(0)
+        # plt.savefig('train_loss.png')
 
-        # plot epoch vs f1 score
-        plt.plot(epochs_range, train_f1_history, label='train')
-        plt.xlabel('Epoch')
-        plt.ylabel('F1 Score')
-        plt.legend()
-        plt.show()
 
-        # plot epoch vs loss
-        plt.plot(epochs_range, val_loss_history, label='val')
-        plt.xlabel('Epoch')
-        plt.ylabel('Loss')
-        plt.legend()
-        plt.show()
 
-        # plot epoch vs accuracy
-        plt.plot(epochs_range, val_acc_history, label='val')
-        plt.xlabel('Epoch')
-        plt.ylabel('Accuracy')
-        plt.legend()
-        plt.show()
+        # # plot epoch vs accuracy
+        # plt.plot(epochs_range, train_acc_history, label='train')
+        # plt.xlabel('Epoch')
+        # plt.ylabel('Accuracy')
+        # plt.legend()
+        # # dont show plot, save it to file
+        # plt.figure(1)
+        # plt.savefig('train_accuracy.png')
 
-        # plot epoch vs f1 score
-        plt.plot(epochs_range, val_f1_history, label='val')
-        plt.xlabel('Epoch')
-        plt.ylabel('F1 Score')
-        plt.legend()
-        plt.show()
+        # # plot epoch vs f1 score
+        # plt.plot(epochs_range, train_f1_history, label='train')
+        # plt.xlabel('Epoch')
+        # plt.ylabel('F1 Score')
+        # plt.legend()
+        # # dont show plot, save it to file
+        # plt.figure(2)
+        # plt.savefig('train_f1.png')
+
+        # # plot epoch vs loss
+        # plt.plot(epochs_range, val_loss_history, label='val')
+        # plt.xlabel('Epoch')
+        # plt.ylabel('Loss')
+        # plt.legend()
+        # # dont show plot, save it to file
+        # plt.figure(3)
+        # plt.savefig('val_loss.png')
+
+        # # plot epoch vs accuracy
+        # plt.plot(epochs_range, val_acc_history, label='val')
+        # plt.xlabel('Epoch')
+        # plt.ylabel('Accuracy')
+        # plt.legend()
+        # # dont show plot, save it to file
+        # plt.figure(4)
+        # plt.savefig('val_accuracy.png')
+
+        # # plot epoch vs f1 score
+        # plt.plot(epochs_range, val_f1_history, label='val')
+        # plt.xlabel('Epoch')
+        # plt.ylabel('F1 Score')
+        # plt.legend()
+        # # dont show plot, save it to file
+        # plt.figure(5)
+        # plt.savefig('val_f1.png')
 
 
 
@@ -427,7 +449,7 @@ def main():
     # train_images = np.concatenate((train_images_a, train_images_b, train_images_c), axis=0)
     # train_labels = np.concatenate((train_labels_a, train_labels_b, train_labels_c), axis=0)
 
-    train_images, train_labels = load_data('training-a', 'training-a.csv', limit = 1000)
+    train_images, train_labels = load_data('training-a', 'training-a.csv', limit = 300)
     train_images, train_labels = preprocess_data(train_images, train_labels)
 
     # print shapes
@@ -465,7 +487,7 @@ def main():
     model.add(SoftmaxLayer())
 
     # train
-    model.train(X_train=X_train, y_train=y_train, X_val=X_val, y_val=y_val, learning_rate=0.00001, epochs=20, batch_size=32)
+    model.train(X_train=X_train, y_train=y_train, X_val=X_val, y_val=y_val, learning_rate=0.00001, epochs=5, batch_size=16)
 
     save_model(model)
     performance_metrics(model)
@@ -510,7 +532,7 @@ def performance_metrics(model):
     plt.title("Confusion matrix")
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
-    plt.show()
+    plt.figure(6)
     plt.savefig('confusion_matrix.png')
 
 if __name__ == '__main__':
