@@ -1,4 +1,5 @@
 testing-*
 training-*
 NumtaDB_with_aug.zip
-*pkl
+*.pkl
+*.pickle

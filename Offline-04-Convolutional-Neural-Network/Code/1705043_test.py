@@ -1,3 +1,10 @@
+import pickle
+import argparse
+import cv2
+import pandas as pd
+import os
+import numpy as np
+
 import numpy as np
 import os
 import cv2
@@ -358,39 +365,31 @@ class Model:
                     grad = layer.backprop(grad, learning_rate)
             
             # evaluate model on training set
-            training_loss, training_accuracy, training_f1 = self.evaluate(X_train, y_train)
-            print("Training loss: ", training_loss)
-            print("Training accuracy: ", training_accuracy)
-            print("Training f1 score: ", training_f1)
+            loss, accuracy, f1 = self.evaluate(X_train, y_train)
+            print("Training loss: ", loss)
+            print("Training accuracy: ", accuracy)
+            print("Training f1 score: ", f1)
             print()
 
             # evaluate model on validation set
-            val_loss, val_accuracy, val_f1 = self.evaluate(X_val, y_val)
-            print("Validation loss: ", val_loss)
-            print("Validation accuracy: ", val_accuracy)
-            print("Validation f1 score: ", val_f1)
+            loss, accuracy, f1 = self.evaluate(X_val, y_val)
+            print("Validation loss: ", loss)
+            print("Validation accuracy: ", accuracy)
+            print("Validation f1 score: ", f1)
             print()
             print()
 
             # save history
-            train_loss_history.append(training_loss)
-            train_acc_history.append(training_accuracy)
-            train_f1_history.append(training_f1)
-            val_loss_history.append(val_loss)
-            val_acc_history.append(val_accuracy)
-            val_f1_history.append(val_f1)
+            train_loss_history.append(loss)
+            train_acc_history.append(accuracy)
+            train_f1_history.append(f1)
+            val_loss_history.append(loss)
+            val_acc_history.append(accuracy)
+            val_f1_history.append(f1)
 
-        # print history
-        print("train loss history: ", train_loss_history)
-        print("train accuracy history: ", train_acc_history)
-        print("train f1 score history: ", train_f1_history)
-        print("val loss history: ", val_loss_history)   
-        print("val accuracy history: ", val_acc_history)
-        print("val f1 score history: ", val_f1_history)
-
+        
         # plot history
         epochs_range = [i for i in range(epochs)]
-        print(epochs_range)
 
         # # plot epoch vs loss
         plt.plot(epochs_range, train_loss_history, label='train')
@@ -438,311 +437,62 @@ class Model:
         for layer in self.layers:
             layer.destroy()
 
-def save_model(model, model_name):
-    # Save the model using pickle
-    import pickle
-    with open(model_name, 'wb') as f:
-        pickle.dump(model, f)
+def load_data(image_folder, limit=None):
+    images = []
+    image_filenames = []
+    for filename in os.listdir(image_folder):
+        img = cv2.imread(os.path.join(image_folder, filename))
+        if img is not None:
+            # convert to grayscale
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            # resize to 28x28
+            img = cv2.resize(img, (28, 28), interpolation=cv2.INTER_CUBIC)
+            # convert to float32
+            img = img.astype(np.float32)
+            images.append(img)
+            image_filenames.append(filename)
+            if limit is not None and len(images) == limit:
+                break
 
-def performance_metrics(model):
-    # load test images
-    test_images, test_labels = load_data('training-d', 'training-d.csv', limit = 50)
-    test_images, test_labels = preprocess_data(test_images, test_labels)
+    return images, image_filenames
 
-    # performance metrics and confusion matrix
-    from sklearn.metrics import confusion_matrix
-    from sklearn.metrics import classification_report
-    from sklearn.metrics import accuracy_score
+def preprocess_data(images):
+    # detection friendly preprocessing
+    for i in range(len(images)):
+        images[i] = cv2.dilate(images[i], (3, 3))
+        # images[i] = cv2.threshold(images[i], 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
+        # images[i] = cv2.GaussianBlur(images[i], (3, 3), 0)
+        # images[i] = cv2.threshold(images[i], 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
 
-    # predict   
-    y_pred = model.predict(test_images)
+    # convert to numpy array
+    images = np.array(images)/255
 
-    # print performance metrics
-    print("Test Accuracy: ", accuracy_score(test_labels, y_pred))
-    print()
-    print("Confusion Matrix: \n", confusion_matrix(test_labels, y_pred))
-    print()
+    # reshape images to 28x28x1
+    images = images.reshape(images.shape[0], 28, 28, 1)
+    # normalize images with std and mean
+    images = (images - np.mean(images)) / np.std(images)
 
-    # print classification report
-    print("Classification Report: \n", classification_report(test_labels, y_pred))
+    return images
 
-    # plot confusion matrix using seaborn
-    import seaborn as sns
-    import matplotlib.pyplot as plt
-
-    cm = confusion_matrix(test_labels, y_pred)
-    plt.figure(figsize=(10, 10))
-    sns.heatmap(cm, annot=True, fmt="d")
-    plt.title("Confusion matrix")
-    plt.ylabel('True label')
-    plt.xlabel('Predicted label')
-    plt.show()
-
-def first_train(model_name):
-    print("Training model: ", model_name)
-    # load images
-    train_images, train_labels = load_data('training-a', 'training-a.csv', limit = 4000)
-    train_images, train_labels = preprocess_data(train_images, train_labels)
-
-    # print shapes
-    print("train_images.shape = ", train_images.shape)
-    print("train_labels.shape = ", train_labels.shape)
-    print("train_images[0].shape = ", train_images[0].shape)
-
-    # suffle data
-    s = np.arange(train_images.shape[0])
-    np.random.shuffle(s)
-    train_images = train_images[s]
-    train_labels = train_labels[s]
-
-    # split data into train and validation
-    train_ratio = 0.8
-    X_train = train_images[:int(train_ratio*len(train_images))]
-    y_train = train_labels[:int(train_ratio*len(train_labels))]
-    X_val = train_images[int(train_ratio*len(train_images)):]
-    y_val = train_labels[int(train_ratio*len(train_labels)):]
-
-    # use lenet-5 model
-    model = Model(10)
-    model.add(ConvolutionLayer(6, 5, 1, 1))
-    model.add(ReLULayer())
-    model.add(MaxPoolingLayer(pool_size=2, stride=2))
-    model.add(ConvolutionLayer(16, 5, 1, 1))
-    model.add(ReLULayer())
-    model.add(MaxPoolingLayer(pool_size=2, stride=2))
-    model.add(FlattenLayer())
-    model.add(FullyConnectedLayer(output_size=120))
-    model.add(ReLULayer())
-    model.add(FullyConnectedLayer(output_size=84))
-    model.add(ReLULayer())
-    model.add(FullyConnectedLayer(output_size=10))
-    model.add(SoftmaxLayer())
-
-    # train
-    model.train(X_train=X_train, y_train=y_train, X_val=X_val, y_val=y_val, learning_rate=0.00001, epochs=10, batch_size=16)
-    model.destroy()
-
-    save_model(model, '1705043_model1.pickle')
-    performance_metrics(model)
-
-def second_train(model_name):
-    print("Training model: ", model_name)
-    # load images
-    train_images, train_labels = load_data('training-a', 'training-a.csv', limit = 4000)
-    train_images, train_labels = preprocess_data(train_images, train_labels)
-
-    # print shapes
-    print("train_images.shape = ", train_images.shape)
-    print("train_labels.shape = ", train_labels.shape)
-    print("train_images[0].shape = ", train_images[0].shape)
-
-    # suffle data
-    s = np.arange(train_images.shape[0])
-    np.random.shuffle(s)
-    train_images = train_images[s]
-    train_labels = train_labels[s]
-
-    # split data into train and validation
-    train_ratio = 0.8
-    X_train = train_images[:int(train_ratio*len(train_images))]
-    y_train = train_labels[:int(train_ratio*len(train_labels))]
-    X_val = train_images[int(train_ratio*len(train_images)):]
-    y_val = train_labels[int(train_ratio*len(train_labels)):]
-
-    # use lenet-5 model
-    model = Model(10)
-    model.add(ConvolutionLayer(6, 5, 1, 1))
-    model.add(ReLULayer())
-    model.add(MaxPoolingLayer(pool_size=2, stride=2))
-    model.add(ConvolutionLayer(16, 5, 1, 1))
-    model.add(ReLULayer())
-    model.add(MaxPoolingLayer(pool_size=2, stride=2))
-    model.add(FlattenLayer())
-    model.add(FullyConnectedLayer(output_size=120))
-    model.add(ReLULayer())
-    model.add(FullyConnectedLayer(output_size=84))
-    model.add(ReLULayer())
-    model.add(FullyConnectedLayer(output_size=10))
-    model.add(SoftmaxLayer())
-
-    # train
-    model.train(X_train=X_train, y_train=y_train, X_val=X_val, y_val=y_val, learning_rate=0.00002, epochs=10, batch_size=16)
-    model.destroy()
-
-    save_model(model, '1705043_model2.pickle')
-    performance_metrics(model)
-
-def third_train(model_name):
-    print("Training model: ", model_name)
-    # load images
-    train_images, train_labels = load_data('training-a', 'training-a.csv', limit = 4000)
-    train_images, train_labels = preprocess_data(train_images, train_labels)
-
-    # print shapes
-    print("train_images.shape = ", train_images.shape)
-    print("train_labels.shape = ", train_labels.shape)
-    print("train_images[0].shape = ", train_images[0].shape)
-
-    # suffle data
-    s = np.arange(train_images.shape[0])
-    np.random.shuffle(s)
-    train_images = train_images[s]
-    train_labels = train_labels[s]
-
-    # split data into train and validation
-    train_ratio = 0.8
-    X_train = train_images[:int(train_ratio*len(train_images))]
-    y_train = train_labels[:int(train_ratio*len(train_labels))]
-    X_val = train_images[int(train_ratio*len(train_images)):]
-    y_val = train_labels[int(train_ratio*len(train_labels)):]
-
-    # use lenet-5 model
-    model = Model(10)
-    model.add(ConvolutionLayer(6, 5, 1, 1))
-    model.add(ReLULayer())
-    model.add(MaxPoolingLayer(pool_size=2, stride=2))
-    model.add(ConvolutionLayer(16, 5, 1, 1))
-    model.add(ReLULayer())
-    model.add(MaxPoolingLayer(pool_size=2, stride=2))
-    model.add(FlattenLayer())
-    model.add(FullyConnectedLayer(output_size=120))
-    model.add(ReLULayer())
-    model.add(FullyConnectedLayer(output_size=84))
-    model.add(ReLULayer())
-    model.add(FullyConnectedLayer(output_size=10))
-    model.add(SoftmaxLayer())
-
-    # train
-    model.train(X_train=X_train, y_train=y_train, X_val=X_val, y_val=y_val, learning_rate=0.00003, epochs=10, batch_size=16)
-    model.destroy()
-
-    save_model(model, '1705043_model3.pickle')
-    performance_metrics(model)
-
-def semi_final_train(model_name):
-    print("Training model: ", model_name)
-    # load images
-    train_images_a, train_labels_a = load_data('training-a', 'training-a.csv')
-    train_images_a, train_labels_a = preprocess_data(train_images_a, train_labels_a)
-
-    train_images_b, train_labels_b = load_data('training-b', 'training-b.csv')
-    train_images_b, train_labels_b = preprocess_data(train_images_b, train_labels_b)
-
-    train_images_c, train_labels_c = load_data('training-c', 'training-c.csv')
-    train_images_c, train_labels_c = preprocess_data(train_images_c, train_labels_c)
-
-    train_images = np.concatenate((train_images_a, train_images_b, train_images_c), axis=0)
-    train_labels = np.concatenate((train_labels_a, train_labels_b, train_labels_c), axis=0)
-
-    # print shapes
-    print("train_images.shape = ", train_images.shape)
-    print("train_labels.shape = ", train_labels.shape)
-    print("train_images[0].shape = ", train_images[0].shape)
-
-    # suffle data
-    s = np.arange(train_images.shape[0])
-    np.random.shuffle(s)
-    train_images = train_images[s]
-    train_labels = train_labels[s]
-
-    train_limit = 4000
-    train_images = train_images[:train_limit]
-    train_labels = train_labels[:train_limit]
-
-    # split data into train and validation
-    train_ratio = 0.8
-    X_train = train_images[:int(train_ratio*len(train_images))]
-    y_train = train_labels[:int(train_ratio*len(train_labels))]
-    X_val = train_images[int(train_ratio*len(train_images)):]
-    y_val = train_labels[int(train_ratio*len(train_labels)):]
-
-    # use lenet-5 model
-    model = Model(10)
-    model.add(ConvolutionLayer(6, 5, 1, 1))
-    model.add(ReLULayer())
-    model.add(MaxPoolingLayer(pool_size=2, stride=2))
-    model.add(ConvolutionLayer(16, 5, 1, 1))
-    model.add(ReLULayer())
-    model.add(MaxPoolingLayer(pool_size=2, stride=2))
-    model.add(FlattenLayer())
-    model.add(FullyConnectedLayer(output_size=120))
-    model.add(ReLULayer())
-    model.add(FullyConnectedLayer(output_size=84))
-    model.add(ReLULayer())
-    model.add(FullyConnectedLayer(output_size=10))
-    model.add(SoftmaxLayer())
-
-    # train
-    model.train(X_train=X_train, y_train=y_train, X_val=X_val, y_val=y_val, learning_rate=0.00001, epochs=10, batch_size=16)
-    model.destroy()
-
-    save_model(model, '1705043_model.pickle')
-    performance_metrics(model)
-
-def final_train(model_name):
-    print("Training model: ", model_name)
-    # load images
-    train_images_a, train_labels_a = load_data('training-a', 'training-a.csv')
-    train_images_a, train_labels_a = preprocess_data(train_images_a, train_labels_a)
-
-    train_images_b, train_labels_b = load_data('training-b', 'training-b.csv')
-    train_images_b, train_labels_b = preprocess_data(train_images_b, train_labels_b)
-
-    train_images_c, train_labels_c = load_data('training-c', 'training-c.csv')
-    train_images_c, train_labels_c = preprocess_data(train_images_c, train_labels_c)
-
-    train_images = np.concatenate((train_images_a, train_images_b, train_images_c), axis=0)
-    train_labels = np.concatenate((train_labels_a, train_labels_b, train_labels_c), axis=0)
-
-    # print shapes
-    print("train_images.shape = ", train_images.shape)
-    print("train_labels.shape = ", train_labels.shape)
-    print("train_images[0].shape = ", train_images[0].shape)
-
-    # suffle data
-    s = np.arange(train_images.shape[0])
-    np.random.shuffle(s)
-    train_images = train_images[s]
-    train_labels = train_labels[s]
-
-    # split data into train and validation
-    train_ratio = 0.8
-    X_train = train_images[:int(train_ratio*len(train_images))]
-    y_train = train_labels[:int(train_ratio*len(train_labels))]
-    X_val = train_images[int(train_ratio*len(train_images)):]
-    y_val = train_labels[int(train_ratio*len(train_labels)):]
-
-    # use lenet-5 model
-    model = Model(10)
-    model.add(ConvolutionLayer(6, 5, 1, 1))
-    model.add(ReLULayer())
-    model.add(MaxPoolingLayer(pool_size=2, stride=2))
-    model.add(ConvolutionLayer(16, 5, 1, 1))
-    model.add(ReLULayer())
-    model.add(MaxPoolingLayer(pool_size=2, stride=2))
-    model.add(FlattenLayer())
-    model.add(FullyConnectedLayer(output_size=120))
-    model.add(ReLULayer())
-    model.add(FullyConnectedLayer(output_size=84))
-    model.add(ReLULayer())
-    model.add(FullyConnectedLayer(output_size=10))
-    model.add(SoftmaxLayer())
-
-    # train
-    model.train(X_train=X_train, y_train=y_train, X_val=X_val, y_val=y_val, learning_rate=0.00001, epochs=5, batch_size=16)
-    model.destroy()
-
-    save_model(model, '1705043_model.pickle')
-    performance_metrics(model)
-
-# write main function here
-def main():
-    first_train(model_name='[Train a selective] learning_rate=0.00001, epochs=10, batch_size=16')
-    second_train(model_name='[Train a selective] learning_rate=0.00002, epochs=10, batch_size=16')
-    third_train(model_name='[Train a selective] learning_rate=0.00003, epochs=10, batch_size=16')
-    semi_final_train(model_name='[Train a,b,c selective] learning_rate=0.00001, epochs=10, batch_size=16')
-    # final_train(model_name='[Train a,b,c full] learning_rate=0.00001, epochs=5, batch_size=16')
+def load_model(model_path):
+    with open(model_path, 'rb') as f:
+        model = pickle.load(f)
+    return model
 
 if __name__ == '__main__':
-    np.random.seed(1)
-    main()
+    parser = argparse.ArgumentParser(description='Predict labels for test images')
+    parser.add_argument('--images', type=str, required=True, help='Path to the folder containing test images')
+    args = parser.parse_args()
+
+    # Load the model using pickle
+    model = load_model('1705043_model.pickle')
+    test_images, test_images_filenames = load_data(args.images, limit=200)
+    test_images = preprocess_data(test_images)
+
+    # predict the labels
+    predicted_labels = model.predict(test_images)
+
+    # save the results to a csv file
+    results = pd.DataFrame({'FileName': test_images_filenames, 'Digit': predicted_labels})
+    results.to_csv('1705043_prediction.csv', index=False)
+
